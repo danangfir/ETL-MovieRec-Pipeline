@@ -1,0 +1,4 @@
+pandas
+numpy
+sqlite3
+scikit-learn
