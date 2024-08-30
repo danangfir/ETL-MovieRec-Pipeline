@@ -21,32 +21,37 @@ def create_database(db_name):
     return conn
 
 def create_table(conn):
-    
     """
-    Create movies and movie_features tables in SQLite database
+    Create tables in the database for storing movies and their features.
 
     Parameters
     ----------
     conn : sqlite3.Connection
         Connection to the SQLite database
+
+    Returns
+    -------
+    None
+
     """
-    
-    create_movies_table = """ CREATE TABLE IF NOT EXISTS movies (
-        movie_id integer PRIMARY KEY,
-        title text,
-        genres text,
+    create_movies_table = """
+    CREATE TABLE IF NOT EXISTS movies (
+        movie_id INTEGER PRIMARY KEY,
+        title TEXT,
+        genres TEXT,
         avg_rating REAL
-        ); """
-        
-    create_movie_features_table = """ CREATE TABLE IF NOT EXISTS movie_features (
-        movie_id integer PRIMARY KEY,
-        genre_feat TEXT
-        ); """
-        
-        
+    );
+    """
+    create_movie_features_table = """
+    CREATE TABLE IF NOT EXISTS movie_features (
+        movie_id INTEGER PRIMARY KEY,
+        genre_features TEXT
+    );
+    """
     conn.execute(create_movies_table)
     conn.execute(create_movie_features_table)
     conn.commit()
+
     
 def insert_movies_data(conn, movies_df):
     """

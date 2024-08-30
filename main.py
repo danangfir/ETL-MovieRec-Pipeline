@@ -1,10 +1,17 @@
 from src.extract import load_movies_data, load_ratings_data
 from src.transform import clean_movie_titles, split_genres, calculate_average_ratings, create_movie_features
-from src.load import create_database, create_tables, insert_movies_data, insert_movie_features_data
+from src.load import create_database, create_table, insert_movies_data, insert_movie_features_data
 from src.recommend import recommend_movies
 
 def main():
     # Step 1: Extract
+    """
+    Main entry point for MovieLens ETL and recommendation system.
+
+    Extracts movies and ratings data from CSV files, transforms the data into
+    the required format, loads the data into a SQLite database, and provides a
+    CLI for recommending movies based on a given movie ID.
+    """
     movies_df = load_movies_data('data/movies.csv')
     ratings_df = load_ratings_data('data/ratings.csv')
 
