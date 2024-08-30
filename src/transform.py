@@ -18,16 +18,21 @@ def clean_movie_titles(movies_df):
     movies_df['title'] = movies_df['genres'].str.replace(r'\(\d{4}\)', '').str.strip()
     return movies_df
 
-def spilt_genres(movies_df):
+def split_genres(movies_df):    
     """
-    Split the genres column into a list of genres
+    Convert genres from pipe-separated string to list
     
     Parameters
     ----------
     movies_df : pd.DataFrame
         DataFrame containing movie information
-    """
     
+    Returns
+    -------
+    movies_df : pd.DataFrame
+        DataFrame containing genres as a list
+    """
+
     movies_df['genres'] = movies_df['genres'].apply(lambda x: x.split('|'))
     return movies_df
 
