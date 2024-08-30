@@ -2,10 +2,35 @@ import sqlite3
 
 
 def create_database(db_name):
+    
+    """
+    Create a new SQLite database with the given name.
+
+    Parameters
+    ----------
+    db_name : str
+        The name of the database to create.
+
+    Returns
+    -------
+    sqlite3.Connection
+        A connection to the newly created database.
+
+    """
     conn = sqlite3.connect(db_name)
     return conn
 
 def create_table(conn):
+    
+    """
+    Create movies and movie_features tables in SQLite database
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Connection to the SQLite database
+    """
+    
     create_movies_table = """ CREATE TABLE IF NOT EXISTS movies (
         movie_id integer PRIMARY KEY,
         title text,
@@ -24,6 +49,20 @@ def create_table(conn):
     conn.commit()
     
 def insert_movies_data(conn, movies_df):
+    """
+    Insert movie data from a DataFrame into the movies table in the database.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Connection to the SQLite database
+    movies_df : pd.DataFrame
+        DataFrame containing movie information
+
+    Returns
+    -------
+    None
+    """
     for _, row in movies_df.iterrows():
         conn.execute(
             "INSERT INTO movies (movie_id, title, genres, avg_rating) VALUES (?, ?, ?, ?)",
@@ -32,6 +71,20 @@ def insert_movies_data(conn, movies_df):
     conn.commit()
 
 def insert_movie_features_data(conn, movies_df):
+    """
+    Insert movie features data from a DataFrame into the movie_features table in the database.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Connection to the SQLite database
+    movies_df : pd.DataFrame
+        DataFrame containing movie features
+
+    Returns
+    -------
+    None
+    """
     for _, row in movies_df.iterrows():
         genre_features = ','.join([str(int(row[f'genre_{genre}'])) for genre in row.index if genre.startswith('genre_')])
         conn.execute(
