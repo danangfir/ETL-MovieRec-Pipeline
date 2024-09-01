@@ -1,10 +1,15 @@
 from flask import Blueprint, jsonify
-from src.utils import load_movies_data, get_movie_by_id
+from src.utils import load_movies_data, get_movie_by_id, get_movie_from_omdb
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 api_blueprint = Blueprint('api', __name__)
 
-@api_blueprint.route('/movies/<int:movie_id>', methods=['GET'])
+OMDB_API_KEY = os.getenv('OMDB_API_KEY')
 
+@api_blueprint.route('/movies/<int:movie_id>', methods=['GET'])
 def get_movie(movie_id):
     """
     Return a movie by ID.
@@ -18,9 +23,11 @@ def get_movie(movie_id):
     -------
     JSON response containing the movie information or an error message
     """
-    movie = get_movie_by_id(movie_id)
+    movies_df = load_movies_data()
+    movie = get_movie_by_id(movie_id, movies_df)
     if movie:
-        return jsonify(movie)
+        omdb_data = get_movie_from_omdb(movie['title'], api_key=OMDB_API_KEY)
+        return jsonify(omdb_data)
     else:
         return jsonify({'error': 'Movie not found'}), 404
     
