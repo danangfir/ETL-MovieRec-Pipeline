@@ -1,32 +1,43 @@
-from src.extract import load_movies_data, load_ratings_data
-from src.transform import clean_movie_titles, split_genres, calculate_average_ratings, create_movie_features
-from src.load import create_database, create_table, insert_movies_data, insert_movie_features_data
 from src.recommend import recommend_movies
+from src.extract import load_movies_data, load_ratings_data, extract_all_genres
+from src.transform import clean_movie_titles, split_genres, calculate_average_ratings, create_movie_features
+from src.load import create_database, create_table, insert_movies_data, insert_movie_features_data, create_movie_features_table
+from src.utils import get_movie_from_omdb, clean_movie_data
+
+import os
+from dotenv import load_dotenv
 
 def main():
-    """
-    Main entry point for MovieLens ETL and recommendation system.
-
-    Extracts movies and ratings data from CSV files, transforms the data into
-    the required format, loads the data into a SQLite database, and provides a
-    CLI for recommending movies based on a given movie ID.
-    """
-    # Extract
-    movies_df = load_movies_data('data/movies.csv')
-    ratings_df = load_ratings_data('data/ratings.csv')
-
-    # Transform
-    movies_df = clean_movie_titles(movies_df)
-    movies_df = split_genres(movies_df)
-    avg_ratings_df = calculate_average_ratings(ratings_df)
-    movies_df = movies_df.merge(avg_ratings_df, on='movie_id')
-    movies_df = create_movie_features(movies_df)
-
-    # Load
+    # Load environment variables and set up database connection
+    load_dotenv()
+    OMDB_API_KEY = os.getenv('OMDB_API_KEY')
     conn = create_database('movies.db')
-    create_table(conn)
-    insert_movies_data(conn, movies_df)
-    insert_movie_features_data(conn, movies_df)
+    
+    # Extract all genres from your movie dataset
+    movie_titles = ["Inception", "The Matrix", "Interstellar"]
+    all_genres = ['Action', 'Adventure', 'Sci-Fi']  # This should be dynamically determined if possible
+    
+    # Create the movie_features table with all genre columns
+    create_movie_features_table(conn, all_genres)
+    
+    movie_id = 1  # Start with movie_id = 1
+    for title in movie_titles:
+        movie_data = get_movie_from_omdb(title, OMDB_API_KEY)
+        if 'error' not in movie_data:
+            cleaned_movie = clean_movie_data(movie_data)
+            cleaned_movie['movie_id'] = movie_id  # Assign the movie_id
+            
+            # Print the movie ID being processed
+            print(f"Inserting movie ID {movie_id} for {title}")
+            
+            # Create features for the movie
+            features = create_movie_features(cleaned_movie)
+            
+            # Insert data into the database
+            insert_movies_data(conn, cleaned_movie)
+            insert_movie_features_data(conn, movie_id, features)
+            
+            movie_id += 1  # Increment the movie ID for the next movie
 
     # Recommendation (CLI)
     while True:
@@ -36,3 +47,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

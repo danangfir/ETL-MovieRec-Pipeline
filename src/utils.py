@@ -53,7 +53,7 @@ def get_movie_by_id(movie_id, movies_df=None):
     """
     if movies_df is None:
         movies_df = load_movies_data()
-    movie = movies_df[movies_df['movieId'] == movie_id]  # Adjusted to match common MovieLens dataset column name
+    movie = movies_df[movies_df['movieId'] == movie_id] 
 
     if not movie.empty:
         return movie.to_dict(orient='records')[0]
@@ -81,3 +81,50 @@ def get_movie_from_omdb(movie_title, api_key='YOUR_OMDB_API_KEY'):
         return response.json()
     else:
         return {'error': 'Could not retrieve data from OMDb'}
+
+
+import pandas as pd
+
+def clean_movie_data(movie_data):
+    """
+    Clean and transform the movie data retrieved from OMDb API.
+
+    Parameters
+    ----------
+    movie_data : dict
+        Dictionary containing movie data from OMDb API.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing cleaned and transformed movie data.
+    """
+    # Split genre if exists
+    if 'Genre' in movie_data:
+        movie_data['Genre'] = movie_data['Genre'].split(', ')
+
+    # Convert to DataFrame
+    movie_df = pd.DataFrame([movie_data])
+    
+    # Rename 'Genre' to 'genres'
+    if 'Genre' in movie_df.columns:
+        movie_df.rename(columns={'Genre': 'genres'}, inplace=True)
+    
+    return movie_df
+
+
+def clean_genre_name(genre_name):
+    """
+    Clean genre name by replacing or removing characters that are not allowed in column names.
+
+    Parameters
+    ----------
+    genre_name : str
+        The genre name to clean.
+
+    Returns
+    -------
+    str
+        Cleaned genre name.
+    """
+    return genre_name.replace('-', '_').replace(' ', '_')

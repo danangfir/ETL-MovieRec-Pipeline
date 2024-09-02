@@ -20,38 +20,53 @@ def get_movie_features(conn):
     movie_features_df = pd.read_sql(query, conn)
     return movie_features_df
 
-def recommend_movies(conn, movie_id, num_recommendations=5):
+def recommend_movies(conn, movie_id, top_n=5):
     """
-    Recommend movies based on cosine similarity of movie features.
+    Recommend movies based on a given movie ID using cosine similarity.
 
     Parameters
     ----------
     conn : sqlite3.Connection
         Connection to the SQLite database
     movie_id : int
-        Movie ID to recommend movies for
-    num_recommendations : int, optional
-        Number of movies to recommend (default is 5)
+        The ID of the movie to base recommendations on
+    top_n : int, optional
+        Number of recommendations to return (default is 5)
 
     Returns
     -------
-    list of int
-        List of movie IDs recommended for the given movie ID
+    list of tuples
+        List of recommended movie IDs and their similarity scores
     """
+    # Load the movie features from the database
+    query = "SELECT * FROM movie_features"
+    movie_features_df = pd.read_sql_query(query, conn)
 
-    movie_features_df = get_movie_features(conn)
-    movie_ids = movie_features_df['movie_id'].tolist()
+    # Check if the movie_id exists in the DataFrame
+    if movie_id not in movie_features_df['movie_id'].values:
+        print(f"Movie ID {movie_id} not found in the dataset.")
+        return []
+
+    # Get the genre feature columns (all columns except movie_id)
+    genre_columns = [col for col in movie_features_df.columns if col.startswith('genre_')]
     
-    # Get features for the given movie_id
-    movie_features = movie_features_df[movie_features_df['movie_id'] == movie_id].iloc[:, 1:].values.reshape(1, -1)
-    
-    # Compute cosine similarity between this movie and all others
-    cosine_similarities = cosine_similarity(movie_features, movie_features_df.iloc[:, 1:].values).flatten()
-    
-    # Get the indices of the most similar movies
-    similar_indices = cosine_similarities.argsort()[::-1][1:num_recommendations+1]
-    
-    # Get the corresponding movie IDs
-    similar_movie_ids = [movie_ids[i] for i in similar_indices]
-    
-    return similar_movie_ids
+    # Extract the feature matrix
+    feature_matrix = movie_features_df[genre_columns].values
+
+    # Compute the cosine similarity matrix
+    similarity_matrix = cosine_similarity(feature_matrix)
+
+    # Find the index of the movie to compare against
+    movie_idx = movie_features_df[movie_features_df['movie_id'] == movie_id].index[0]
+
+    # Get similarity scores for the selected movie
+    similarity_scores = list(enumerate(similarity_matrix[movie_idx]))
+
+    # Sort by similarity score in descending order and exclude the first (itself)
+    similarity_scores = sorted(similarity_scores, key=lambda x: x[1], reverse=True)[1:top_n+1]
+
+    # Get the recommended movie IDs and their similarity scores
+    recommended_movies = [(int(movie_features_df.iloc[i]['movie_id']), score) for i, score in similarity_scores]
+
+    return recommended_movies
+
